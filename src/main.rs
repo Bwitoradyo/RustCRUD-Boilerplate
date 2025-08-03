@@ -8,9 +8,14 @@ use state::create_storage;
 use handlers::*;
 
 #[rocket::launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    // Load environment variables from .env file
+    dotenv::dotenv().ok();
+    
+    let storage = create_storage().await.expect("Failed to connect to MongoDB");
+    
     rocket::build()
-        .manage(create_storage())
+        .manage(storage)
         .mount("/api", routes![
             get_users,
             get_user,
