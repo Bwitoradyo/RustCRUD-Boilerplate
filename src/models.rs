@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use bson::oid::ObjectId;
+use validator::Validate;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -9,15 +10,19 @@ pub struct User {
     pub email: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateUser {
+    #[validate(length(min = 2, max = 50, message = "Name must be between 2 and 50 characters"))]
     pub name: String,
+    #[validate(email(message = "Invalid email format"))]
     pub email: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateUser {
+    #[validate(length(min = 2, max = 50, message = "Name must be between 2 and 50 characters"))]
     pub name: Option<String>,
+    #[validate(email(message = "Invalid email format"))]
     pub email: Option<String>,
 }
 
