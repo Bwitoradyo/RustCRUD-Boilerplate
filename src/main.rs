@@ -3,6 +3,7 @@
 mod models;
 mod state;
 mod handlers;
+mod error;
 
 use state::create_storage;
 use handlers::*;

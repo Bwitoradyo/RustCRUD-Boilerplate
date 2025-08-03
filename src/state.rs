@@ -1,10 +1,11 @@
 use mongodb::{Client, Collection, options::ClientOptions};
 use std::env;
 use crate::models::User;
+use crate::error::AppResult;
 
 pub type UserStorage = Client;
 
-pub async fn create_storage() -> Result<UserStorage, mongodb::error::Error> {
+pub async fn create_storage() -> AppResult<UserStorage> {
     let mongodb_uri = env::var("MONGODB_URI")
         .unwrap_or_else(|_| "mongodb://localhost:27017".to_string());
     
