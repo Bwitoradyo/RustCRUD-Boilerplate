@@ -4,10 +4,11 @@ use futures::stream::TryStreamExt;
 use crate::models::{User, CreateUser, UpdateUser};
 use crate::state::{UserStorage, get_user_collection};
 use crate::error::{AppError, AppResult};
+use crate::config::AppConfig;
 
 #[rocket::get("/users")]
-pub async fn get_users(storage: &State<UserStorage>) -> AppResult<Json<Vec<User>>> {
-    let collection = get_user_collection(storage);
+pub async fn get_users(storage: &State<UserStorage>, config: &State<AppConfig>) -> AppResult<Json<Vec<User>>> {
+    let collection = get_user_collection(storage, config);
     
     match collection.find(doc! {}, None).await {
         Ok(mut cursor) => {
@@ -22,9 +23,9 @@ pub async fn get_users(storage: &State<UserStorage>) -> AppResult<Json<Vec<User>
 }
 
 #[rocket::get("/users/<id>")]
-pub async fn get_user(id: String, storage: &State<UserStorage>) -> AppResult<Json<User>> {
+pub async fn get_user(id: String, storage: &State<UserStorage>, config: &State<AppConfig>) -> AppResult<Json<User>> {
     let object_id = ObjectId::parse_str(&id)?;
-    let collection = get_user_collection(storage);
+    let collection = get_user_collection(storage, config);
     
     match collection.find_one(doc! { "_id": object_id }, None).await? {
         Some(user) => Ok(Json(user)),
@@ -33,9 +34,9 @@ pub async fn get_user(id: String, storage: &State<UserStorage>) -> AppResult<Jso
 }
 
 #[rocket::post("/users", data = "<create_user>")]
-pub async fn create_user(create_user: Json<CreateUser>, storage: &State<UserStorage>) -> AppResult<status::Created<Json<User>>> {
+pub async fn create_user(create_user: Json<CreateUser>, storage: &State<UserStorage>, config: &State<AppConfig>) -> AppResult<status::Created<Json<User>>> {
     let mut user = User::new(create_user.name.clone(), create_user.email.clone());
-    let collection = get_user_collection(storage);
+    let collection = get_user_collection(storage, config);
     
     match collection.insert_one(&user, None).await? {
         result => {
@@ -47,9 +48,9 @@ pub async fn create_user(create_user: Json<CreateUser>, storage: &State<UserStor
 }
 
 #[rocket::put("/users/<id>", data = "<update_user>")]
-pub async fn update_user(id: String, update_user: Json<UpdateUser>, storage: &State<UserStorage>) -> AppResult<Json<User>> {
+pub async fn update_user(id: String, update_user: Json<UpdateUser>, storage: &State<UserStorage>, config: &State<AppConfig>) -> AppResult<Json<User>> {
     let object_id = ObjectId::parse_str(&id)?;
-    let collection = get_user_collection(storage);
+    let collection = get_user_collection(storage, config);
     
     // Find the user first
     let mut user = match collection.find_one(doc! { "_id": object_id }, None).await? {
@@ -66,9 +67,9 @@ pub async fn update_user(id: String, update_user: Json<UpdateUser>, storage: &St
 }
 
 #[rocket::delete("/users/<id>")]
-pub async fn delete_user(id: String, storage: &State<UserStorage>) -> AppResult<()> {
+pub async fn delete_user(id: String, storage: &State<UserStorage>, config: &State<AppConfig>) -> AppResult<()> {
     let object_id = ObjectId::parse_str(&id)?;
-    let collection = get_user_collection(storage);
+    let collection = get_user_collection(storage, config);
     
     let result = collection.delete_one(doc! { "_id": object_id }, None).await?;
     if result.deleted_count > 0 {
